@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getEmployees } from '../services/api';
+import { getEmployees, getJobTitles, getRoles, getProvinces, getDistricts, getVillages, } from '../services/api';
 
 
 const statusList = [
@@ -15,6 +15,32 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [loading, setLoading] = useState(false);
+  const isEmpty = (value) => {
+    return !value || value.trim() === '';
+  };
+
+  // form
+  const [fullName, setFullName] = useState("");
+  const [touchedFullName, setTouchedFullName] = useState(false);
+
+  const [identityNumber, setIdentityNumber] = useState("");
+  const [touchedIdentityNumber, setTouchedIdentityNumber] = useState(false)
+
+  const [gender, setGender] = useState("");
+  const [isErrorGender, setIsErrorGender] = useState(false);
+  const handleChangeGender = (e) => {
+    setGender(e.target.value);
+    setIsErrorGender(false);
+  };
+
+  const [birthPlace, setBirthPlace] = useState("");
+  const [jobTitleList, setJobTitleList] = useState([]);
+  const [jobTitleId, setJobTitleId] = useState(null);
+  const [customJobTitle, setCustomJobTitle] = useState("");
+  const [roleList, setRoleList] = useState([]);
+  const [roleIds, setRoleIds] = useState([]);
+
+
 
   // fungsi fetchEmployees di luar useEffect supaya bisa dipanggil ulang
   const fetchEmployees = async () => {
@@ -35,19 +61,34 @@ export default function Home() {
     }
   };
 
-  // Debounced search effect
-  // useEffect(() => {
-  //   const handler = setTimeout(() => {
-  //     fetchEmployees();
-  //   }, 5000); // 5 detik
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const _jobTitles = await getJobTitles();
+        setJobTitleList(_jobTitles);
+        const roles = await getRoles();
+        console.log(roles);
+        setRoleList(roles);
+      } catch (error) {
+        console.error("Gagal ambil job titles", error);
+      }
+    };
+    fetchData();
+  }, []);
 
-  //   return () => clearTimeout(handler); // bersihkan debounce saat input berubah
-  // }, [search]);
-
-  // Status change effect (langsung fetch tanpa debounce)
+  // Status change effect
   useEffect(() => {
     fetchEmployees();
   }, [status, search]);
+
+  const handleCheckboxChange = (e) => {
+    const value = e.target.value;
+    setRoleIds((prev) =>
+      prev.includes(value)
+        ? prev.filter((id) => id !== value)
+        : [...prev, value]
+    );
+  };
 
   // handler search input
   const handleSearchChange = (e) => {
@@ -58,6 +99,17 @@ export default function Home() {
   const handleStatusChange = (e) => {
     setStatus(e.target.value);
   };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    setTouchedFullName(true);
+    setTouchedIdentityNumber(true);
+    const errorGender = isEmpty(gender);
+    setIsErrorGender(errorGender);
+
+    console.log(roleIds, jobTitleId, customJobTitle, gender, fullName, identityNumber, birthPlace);
+  }
 
   return (
     <div class="mx-auto flex flex-col md:flex-row gap-6 p-4">
@@ -161,42 +213,90 @@ export default function Home() {
       </section>
 
       {/* <!-- Middle and Right Panel --> */}
-      <section class="bg-white rounded-md shadow border border-gray-200 w-full md:w-[70%] flex gap-6 p-4">
-        <form class="flex flex-col md:flex-row gap-6 w-full">
+      <section class="bg-white rounded-md shadow w-full md:w-[70%] flex gap-6 p-4">
+        <form class="flex flex-col md:flex-row gap-6 w-full" onSubmit={handleSubmit} validate>
           {/* <!-- Middle Panel --> */}
           <div class="flex flex-col gap-3 w-full md:w-1/2">
             <h3 class="text-xs font-bold text-gray-900 uppercase">FORM TAMBAH KARYAWAN</h3>
+
             <div>
-              <label for="namaLengkap" class="block text-[10px] font-semibold text-gray-700 mb-1">Nama Lengkap <span
-                class="text-red-600">*</span></label>
-              <input id="namaLengkap" type="text" placeholder="Nama Lengkap"
-                class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <label htmlFor="fullName" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                Nama Lengkap <span className="text-red-600">*</span>
+              </label>
+              <input type="text" id="fullName" name="fullName" placeholder="Nama Lengkap"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                onBlur={() => setTouchedFullName(true)}
+                className={`w-full border rounded text-xs px-2 py-1 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500  border-gray-300 text-gray-400`}
+              />
+              {touchedFullName && isEmpty(fullName)  && (
+                <p className="text-red-600 text-[10px] mb-0">Nama Lengkap wajib diisi.</p>
+              )}
             </div>
+
             <div>
-              <label for="noKartuIdentitas" class="block text-[10px] font-semibold text-gray-700 mb-1">No. Kartu Identitas<span
-                class="text-gray-400 text-[8px] font-normal"> (Nomor Induk Kependudukan)</span></label>
-              <input id="noKartuIdentitas" type="text" placeholder="No. Kartu Identitas"
-                class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <label htmlFor="noKartuIdentitas" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                No. Kartu Identitas
+                <span class="text-gray-400 text-[8px] font-normal"> (Nomor Induk Kependudukan)</span>
+                <span className="text-red-600">*</span>
+              </label>
+              <input type="text" id="identityNumber" name="identityNumber" placeholder="No. Kartu Identitas"
+                value={identityNumber}
+                onChange={(e) => setIdentityNumber(e.target.value)}
+                onBlur={() => setTouchedIdentityNumber(true)}
+                className={`w-full border rounded text-xs px-2 py-1 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500  border-gray-300 text-gray-400`}
+              />
+              {touchedIdentityNumber && isEmpty(identityNumber) && (
+                <p className="text-red-600 text-[10px] mb-0">No. Kartu Identitas wajib diisi.</p>
+              )}
             </div>
+
             <div>
-              <label for="namaLengkap" class="block text-[10px] font-semibold text-gray-700 mb-1">Jenis Kelamin <span
-                class="text-red-600">*</span></label>
-              <div class="d-flex justify-content-between text-[10px] font-semibold text-gray-700 gap-2">
-                <label class="flex items-center gap-1 mt-1">
-                  <input type="radio" name="tipeRadio" value="Perawat" class="w-3 h-3" />
+              <label htmlFor="gender" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                Jenis Kelamin <span className="text-red-600">*</span>
+              </label>
+              <div
+                className="flex justify-between text-[10px] font-semibold text-gray-700 gap-2"
+              >
+                <label className="flex items-center gap-1 mt-1">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="male"
+                    checked={gender === "male"}
+                    onChange={handleChangeGender}
+                    className="w-3 h-3"
+                  />
                   Laki-Laki
                 </label>
-                <label class="flex items-center gap-1 mt-1 min-w-[300px]">
-                  <input type="radio" name="tipeRadio" value="Bidan" class="w-3 h-3" />
+                <label className="flex items-center gap-1 mt-1 min-w-[300px]">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="female"
+                    checked={gender === "female"}
+                    onChange={handleChangeGender}
+                    className="w-3 h-3"
+                  />
                   Perempuan
                 </label>
               </div>
+              {isErrorGender && (
+                <p className="text-red-500 text-[10px] mt-1 mb-0">Jenis Kelamin wajib dipilih</p>
+              )}
             </div>
+
             <div>
-              <label for="tempatLahir" class="block text-[10px] font-semibold text-gray-700 mb-1">Tempat Lahir</label>
-              <input id="tempatLahir" type="text" placeholder="Tempat Lahir"
-                class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <label htmlFor="birthPlace" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                Tempat Lahir
+              </label>
+              <input type="text" id="birthPlace" name="birthPlace" placeholder="Tempat Lahir"
+                value={birthPlace}
+                onChange={(e) => setBirthPlace(e.target.value)}
+                className={`w-full border rounded text-xs px-2 py-1 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500  border-gray-300 text-gray-400`}
+              />
             </div>
+            
             <div>
               <label for="tanggalLahir" class="block text-[10px] font-semibold text-gray-700 mb-1">Tanggal Lahir</label>
               <input id="tanggalLahir" type="text" placeholder="dd/mm/yyyy"
@@ -240,6 +340,11 @@ export default function Home() {
               </div>
             </div>
             <div>
+              <label for="uploadProfile" class="block text-[10px] font-semibold text-gray-700 mb-1">Foto Profile</label>
+              <input id="uploadProfile" type="file" accept="image/*"
+                class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            </div>
+            <div>
               <label for="detilAlamat" class="block text-[10px] font-semibold text-gray-700 mb-1">Detil Alamat</label>
               <textarea id="detilAlamat" rows="3" placeholder="Alamat"
                 class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea>
@@ -247,7 +352,7 @@ export default function Home() {
           </div>
 
           {/* <!-- Right Panel --> */}
-          <div class="flex flex-col gap-3 w-full md:w-1/2">
+          <div class="flex flex-col gap-3 w-full md:w-1/2 mt-[40px]">
             <div>
               <label for="username" class="block text-[10px] font-semibold text-gray-700 mb-1">Username <span
                 class="text-red-600">*</span></label>
@@ -272,58 +377,51 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <fieldset class="text-[10px] font-semibold text-gray-700 gap-2">
-              <legend>Tipe <span class="text-red-600">*</span></legend>
+            <fieldset class="text-[10px] font-semibold text-gray-700 gap-2 mt-[-5px]">
+              <label class="block text-[10px] font-semibold text-gray-700 mb-1">Tipe <span class="text-red-600">*</span></label>
               <div class="d-flex justify-content-between">
                 <div>
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="checkbox" name="tipe" value="Manager" class="w-3 h-3" />
-                    Manager
-                  </label>
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="checkbox" name="tipe" value="Admin" checked class="w-3 h-3" />
-                    Admin
-                  </label>
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="checkbox" name="tipe" value="Resepsionis" class="w-3 h-3" />
-                    Resepsionis
-                  </label>
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="checkbox" name="tipe" value="Manajemen" class="w-3 h-3" />
-                    Manajemen
-                  </label>
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="checkbox" name="tipe" value="Finance" class="w-3 h-3" />
-                    Finance
-                  </label>
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="checkbox" name="tipe" value="Kasir" class="w-3 h-3" />
-                    Kasir
-                  </label>
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="checkbox" name="tipe" value="Purchasing" class="w-3 h-3" />
-                    Purchasing
-                  </label>
+                  {roleList.map((role) => (
+                    <label key={role.id} className="flex items-center gap-1 mt-1">
+                      <input
+                        type="checkbox"
+                        name="tipe"
+                        value={role.id}
+                        checked={roleIds.includes(String(role.id))}
+                        onChange={handleCheckboxChange}
+                        className="w-3 h-3"
+                      />
+                      {role.name}
+                    </label>
+                  ))}
                 </div>
-                <div class="min-w-[400px]">
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="radio" name="tipeRadio" value="Perawat" class="w-3 h-3" />
-                    Perawat
-                  </label>
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="radio" name="tipeRadio" value="Bidan" class="w-3 h-3" />
-                    Bidan
-                  </label>
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="radio" name="tipeRadio" value="Dokter" class="w-3 h-3" />
-                    Dokter
-                  </label>
-                  <label class="flex items-center gap-1 mt-1">
-                    <input type="radio" name="tipeRadio" value="Lainnya" checked class="w-3 h-3" />
-                    Lainnya
-                  </label>
-                  <input type="text" placeholder="Lainnya"
-                    class="border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2 min-w-[400px]" />
+                <div className="min-w-[400px]">
+                  {jobTitleList.map((item) => (
+                    <label key={item.id} className="flex items-center gap-1 mt-1">
+                      <input
+                        type="radio"
+                        name="jobTitleId"
+                        value={item.id}
+                        className="w-3 h-3"
+                        checked={jobTitleId === item.id}
+                        onChange={(e) => setJobTitleId(Number(e.target.value))}
+                      />
+                      {item.name}
+                    </label>
+                  ))}
+
+                  <input
+                    type="text"
+                    placeholder="Lainnya"
+                    disabled={jobTitleId !== 4}
+                    value={customJobTitle}
+                    onChange={(e) => setCustomJobTitle(e.target.value)}
+                    className={`border rounded text-xs px-2 py-1 focus:outline-none focus:ring-1 mt-2 min-w-[400px]
+                        ${jobTitleId === 4 && !customJobTitle
+                        ? 'border-red-500 text-red-500 placeholder-red-300 focus:ring-red-500'
+                        : 'border-gray-300 text-gray-400 placeholder:text-gray-300 focus:ring-blue-500'}
+                    `}
+                  />
                 </div>
               </div>
             </fieldset>
@@ -355,7 +453,7 @@ export default function Home() {
             </div>
             <div class="flex justify-end mt-auto">
               <button type="submit"
-                class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded px-4 py-1">Simpan</button>
+                className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded px-4 py-1">Simpan</button>
             </div>
           </div>
         </form>

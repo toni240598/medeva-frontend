@@ -35,8 +35,37 @@ export const getProfile = async () => {
   return response.data;
 };
 
+export const getProvinces = async () => {
+  const response = await api.get('/provinces');
+  return response.data.data;
+}
+
+export const getCities = async () => {
+  const response = await api.get('/cities');
+  return response.data.data;
+}
+
+export const getDistricts = async () => {
+  const response = await api.get('/districts');
+  return response.data.data;
+}
+
+export const getVillages = async () => {
+  const response = await api.get('/villages');
+  return response.data.data;
+}
+
+export const getJobTitles = async () => {
+  const response = await api.get('/job-titles');
+  return response.data.data;
+}
+
+export const getRoles = async () => {
+  const response = await api.get('/roles');
+  return response.data.data;
+}
+
 export const getEmployees = async (params = {}) => {
-  console.log(params);
   const response = await api.get('/employees', {params});
   return response.data.data;
 };
