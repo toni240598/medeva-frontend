@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import { getEmployees, getJobTitles, getRoles, getProvinces, getCities, getDistricts, getVillages, getDoctorCodes, createEmployee, } from '../services/api';
-
+import { showError, showSuccess } from '../services/toastService';
 
 const statusList = [
   { status: 'all', label: 'Semua Karyawan' },
@@ -12,6 +12,7 @@ const baseURL = 'http://localhost:3000';
 
 
 export default function Home() {
+  const [employeeId, setEmployeeId] = useState(null);
   const [employeeList, setEmployeeList] = useState([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
@@ -193,10 +194,47 @@ export default function Home() {
       formData.append('customJobTitle', customJobTitle);
     }
     roleIds.forEach(id => formData.append('roleIds', id));
-    await createEmployee(formData);
+    if (isEmpty(fullName) || isEmpty(identityNumber) || isEmpty(gender) || isEmpty(username) || isEmpty(email) || isEmpty(password)) {
+      showError('Data harus dilengkapi terlebih dahulu');
+    } else {
+      if (employeeId == null) {
+        await createEmployee(formData);
+      } else {
+
+      }
+      resetForm();
+      fetchEmployees();
+      showSuccess('Berhasil mennyimpan data karyawan');
+    }
+  }
+
+  const handleEditData = (e) => {
+    console.log(e);
     resetForm();
-    fetchEmployees();
-    showSuccess('Berhasil mennyimpan data karyawan');
+    setEmployeeId(e.id);
+    setRoleIds(e.roles.map(r => String(r.id)));
+    setJobTitleId(e.jobTitleId);
+    setCustomJobTitle(e.customJobTitle);
+    setGender(e.gender);
+    setFullName(e.fullName);
+    setIdentityNumber(e.identityNumber);
+    setBirthPlace(e.birthPlace);
+    setBirthDate(e.birthDate);
+    setPhoneNumber(e.phoneNumber);
+    setContractStartDate(e.contractStartDate);
+    setContractEndDate(e.contractEndDate);
+    setAddressDetail(e.addressDetail);
+    setUsername(e.username);
+    setEmail(e.email);
+    setPassword(e.password);
+    setDoctorCodeId(e.doctorCodeId);
+    // setUploadProfile();
+    setProvinceId(e.provinceId);
+    setCityId(e.cityId);
+    setDistrictId(e.districtId);
+    setVillageId(e.villageId);
+    setMartialStatus(e.martialStatus);
+    setDoctorCodeId(e.doctorCodeId);
   }
 
   function resetForm() {
@@ -300,7 +338,7 @@ export default function Home() {
                     </div>
                   </td>
                   <td class="border border-gray-200 p-1 text-center align-top">
-                    <button
+                    <button onClick={() => handleEditData(e)}
                       class="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
                       <ion-icon name="arrow-forward-outline" class="text-sm"></ion-icon>
                     </button>
