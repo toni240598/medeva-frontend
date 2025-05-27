@@ -80,4 +80,9 @@ export const createEmployee = async (formData) => {
   return response.data.data;
 }
 
+export const updateEmployee = async (employeeId, formData) => {
+  const response = await api.put(`/employees/${employeeId}`, formData);
+  return response.data.data;
+}
+
 export default api;

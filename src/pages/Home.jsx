@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
-import { getEmployees, getJobTitles, getRoles, getProvinces, getCities, getDistricts, getVillages, getDoctorCodes, createEmployee, } from '../services/api';
+import { useEffect, useState } from 'react';
+import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
+import { createEmployee, getCities, getDistricts, getDoctorCodes, getEmployees, getJobTitles, getProvinces, getRoles, getVillages, updateEmployee, } from '../services/api';
 import { showError, showSuccess } from '../services/toastService';
 
 const statusList = [
@@ -131,7 +131,7 @@ export default function Home() {
         setVillageList(villages);
         setFilteredVillages(villages);
       } catch (error) {
-        console.error("Gagal ambil job titles", error);
+        console.error("Gagal ambil", error);
       }
     };
     fetchData();
@@ -183,24 +183,26 @@ export default function Home() {
     formData.append('addressDetail', addressDetail);
     formData.append('username', username);
     formData.append('email', email);
-    formData.append('password', password);
     formData.append('doctorCodeId', doctorCodeId);
     formData.append('provinceId', provinceId);
     formData.append('cityId', cityId);
     formData.append('districtId', districtId);
     formData.append('villageId', villageId);
     formData.append('martialStatus', martialStatus);
+    formData.append('password', password);
     if (customJobTitle) {
       formData.append('customJobTitle', customJobTitle);
     }
     roleIds.forEach(id => formData.append('roleIds', id));
-    if (isEmpty(fullName) || isEmpty(identityNumber) || isEmpty(gender) || isEmpty(username) || isEmpty(email) || isEmpty(password)) {
+    if (isEmpty(fullName) || isEmpty(identityNumber) || isEmpty(gender) || isEmpty(username) 
+      || isEmpty(email) || (isEmpty(password) && employeeId == null)) {
       showError('Data harus dilengkapi terlebih dahulu');
     } else {
       if (employeeId == null) {
         await createEmployee(formData);
       } else {
-
+        await updateEmployee(employeeId, formData);
+        setEmployeeId(null);
       }
       resetForm();
       fetchEmployees();
@@ -226,15 +228,15 @@ export default function Home() {
     setAddressDetail(e.addressDetail);
     setUsername(e.username);
     setEmail(e.email);
-    setPassword(e.password);
     setDoctorCodeId(e.doctorCodeId);
-    // setUploadProfile();
     setProvinceId(e.provinceId);
     setCityId(e.cityId);
     setDistrictId(e.districtId);
     setVillageId(e.villageId);
     setMartialStatus(e.martialStatus);
     setDoctorCodeId(e.doctorCodeId);
+    // setUploadProfile();
+    // setPassword(e.password);
   }
 
   function resetForm() {
@@ -266,7 +268,7 @@ export default function Home() {
   return (
     <div class="mx-auto flex flex-col md:flex-row gap-6 p-4">
       {/* <!-- Left Panel --> */}
-      <section class="bg-white rounded-md shadow border border-gray-200 w-full md:w-[30%] flex flex-col p-4">
+      <section class="bg-white rounded-md shadow border border-gray-200 w-full md:w-[30%] flex flex-col p-4 overflow-y-auto max-h-[95vh] p-4 border rounded scroll-smooth scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
         <div class="flex justify-between items-center mb-3">
           <h2 class="text-xs font-bold text-gray-900 uppercase">DATA KARYAWAN & TENAGA KESEHATAN</h2>
           <ion-icon name="ellipsis-horizontal" class="text-gray-400 text-xl cursor-pointer"></ion-icon>
@@ -314,7 +316,7 @@ export default function Home() {
               <th class="border border-gray-200 p-1 w-10"></th>
             </tr>
           </thead>
-          <tbody class="max-h-[300px] overflow-y-auto">
+          <tbody>
             {
               employeeList.map((e, index) => (
                 <tr class="border border-gray-200">
@@ -606,6 +608,7 @@ export default function Home() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Password"
                   value={password}
+                  disabled={employeeId != null}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 pr-8 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
