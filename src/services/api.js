@@ -75,4 +75,9 @@ export const getEmployees = async (params = {}) => {
   return response.data.data;
 };
 
+export const createEmployee = async (formData) => {
+  const response = await api.post('/employees', formData);
+  return response.data.data;
+}
+
 export default api;

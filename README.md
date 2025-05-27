@@ -42,3 +42,11 @@ Gunakan kredensial berikut untuk masuk ke aplikasi:
 * Username: admin
 
 * Password: admin123
+
+
+
+
+    console.log(roleIds, jobTitleId, customJobTitle, gender, fullName, identityNumber,
+      birthPlace, birthDate, phoneNumber, contractStartDate, contractEndDate, addressDetail,
+      username, email, password, doctorCodeId, uploadProfile, provinceId, cityId,
+    );

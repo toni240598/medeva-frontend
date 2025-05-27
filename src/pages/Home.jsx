@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
-import { getEmployees, getJobTitles, getRoles, getProvinces, getCities, getDistricts, getVillages, getDoctorCodes, } from '../services/api';
+import { getEmployees, getJobTitles, getRoles, getProvinces, getCities, getDistricts, getVillages, getDoctorCodes, createEmployee, } from '../services/api';
 
 
 const statusList = [
@@ -55,16 +55,34 @@ export default function Home() {
   const [provinceList, setProvinceList] = useState([]);
   const [provinceId, setProvinceId] = useState(null);
   const handleProvinceChange = (e) => {
-    const _provinceId = e.target.value;
-    setProvinceId(_provinceId);
+    setProvinceId(e.target.value);
     setCityId(null);
-    setFilteredCities(cityList.filter(c => c.id == e.target.value));
+    setDistrictId(null);
+    setVillageId(null);
+    setFilteredCities(cityList.filter(c => c.provinceId == e.target.value));
   }
   const [cityList, setCityList] = useState([]);
   const [cityId, setCityId] = useState(null);
   const [filteredCities, setFilteredCities] = useState([]);
   const handleCityChange = (e) => {
     setCityId(e.target.value);
+    setDistrictId(null);
+    setVillageId(null);
+    setFilteredDistricts(districtList.filter(d => d.cityId == e.target.value));
+  }
+  const [districtList, setDistrictList] = useState([]);
+  const [districtId, setDistrictId] = useState(null);
+  const [filteredDistricts, setFilteredDistricts] = useState([]);
+  const handleDistrictChange = (e) => {
+    setDistrictId(e.target.value);
+    setVillageId(null)
+    setFilteredVillages(villageList.filter(c => c.districtId == e.target.value));
+  }
+  const [villageList, setVillageList] = useState([]);
+  const [villageId, setVillageId] = useState(null);
+  const [filteredVillages, setFilteredVillages] = useState([]);
+  const handleVillageChange = (e) => {
+    setVillageId(e.target.value);
   }
 
   const [uploadProfile, setUploadProfile] = useState(null);
@@ -105,6 +123,12 @@ export default function Home() {
         const cities = await getCities();
         setCityList(cities);
         setFilteredCities(cities);
+        const districts = await getDistricts();
+        setDistrictList(districts);
+        setFilteredDistricts(districts);
+        const villages = await getVillages();
+        setVillageList(villages);
+        setFilteredVillages(villages);
       } catch (error) {
         console.error("Gagal ambil job titles", error);
       }
@@ -136,7 +160,7 @@ export default function Home() {
     setStatus(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     setTouchedFullName(true);
@@ -144,10 +168,61 @@ export default function Home() {
     const errorGender = isEmpty(gender);
     setIsErrorGender(errorGender);
 
-    console.log(roleIds, jobTitleId, customJobTitle, gender, fullName, identityNumber,
-      birthPlace, birthDate, phoneNumber, contractStartDate, contractEndDate, addressDetail,
-      username, email, password, doctorCodeId, uploadProfile, provinceId,
-    );
+    const formData = new FormData();
+    formData.append('photo', uploadProfile);
+    formData.append('jobTitleId', jobTitleId);
+    formData.append('gender', gender);
+    formData.append('fullName', fullName);
+    formData.append('identityNumber', identityNumber);
+    formData.append('birthPlace', birthPlace);
+    formData.append('birthDate', birthDate);
+    formData.append('phoneNumber', phoneNumber);
+    formData.append('contractStartDate', contractStartDate);
+    formData.append('contractEndDate', contractEndDate);
+    formData.append('addressDetail', addressDetail);
+    formData.append('username', username);
+    formData.append('email', email);
+    formData.append('password', password);
+    formData.append('doctorCodeId', doctorCodeId);
+    formData.append('provinceId', provinceId);
+    formData.append('cityId', cityId);
+    formData.append('districtId', districtId);
+    formData.append('villageId', villageId);
+    formData.append('martialStatus', martialStatus);
+    if (customJobTitle) {
+      formData.append('customJobTitle', customJobTitle);
+    }
+    roleIds.forEach(id => formData.append('roleIds', id));
+    await createEmployee(formData);
+    resetForm();
+    fetchEmployees();
+    showSuccess('Berhasil mennyimpan data karyawan');
+  }
+
+  function resetForm() {
+    setRoleIds([]);
+    setJobTitleId(null);
+    setCustomJobTitle('');
+    setGender('');
+    setFullName('');
+    setIdentityNumber('');
+    setBirthPlace('');
+    setBirthDate('');
+    setPhoneNumber('');
+    setContractStartDate('');
+    setContractEndDate('');
+    setAddressDetail('');
+    setUsername('');
+    setEmail('');
+    setPassword('');
+    setDoctorCodeId(null);
+    setUploadProfile(null);
+    setProvinceId(null);
+    setCityId(null);
+    setDistrictId(null);
+    setVillageId(null);
+    setMartialStatus("single");
+    setDoctorCodeId(null);
   }
 
   return (
@@ -253,7 +328,7 @@ export default function Home() {
 
       {/* <!-- Middle and Right Panel --> */}
       <section class="bg-white rounded-md shadow w-full md:w-[70%] flex gap-6 p-4">
-        <form class="flex flex-col md:flex-row gap-6 w-full" onSubmit={handleSubmit} validate>
+        <form class="flex flex-col md:flex-row gap-6 w-full" onSubmit={handleSubmit}>
           {/* <!-- Middle Panel --> */}
           <div class="flex flex-col gap-3 w-full md:w-1/2">
             <h3 class="text-xs font-bold text-gray-900 uppercase">FORM TAMBAH KARYAWAN</h3>
@@ -407,19 +482,42 @@ export default function Home() {
 
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label for="kecamatan" class="block text-[10px] font-semibold text-gray-700 mb-1">Kecamatan</label>
-                <select id="kecamatan"
-                  class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  <option>Pilih Kecamatan</option>
+                <label htmlFor="district" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                  Kota / Kabupaten
+                </label>
+                <select
+                  id="district"
+                  value={districtId}
+                  onChange={handleDistrictChange}
+                  className="w-full border border-gray-300 rounded text-xs text-gray-400 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Pilih Kota / Kabupaten</option>
+                  {filteredDistricts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div>
-                <label for="kelurahan" class="block text-[10px] font-semibold text-gray-700 mb-1">Kelurahan</label>
-                <select id="kelurahan"
-                  class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  <option>Pilih Kelurahan</option>
+                <label htmlFor="village" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                  Kelurahan
+                </label>
+                <select
+                  id="village"
+                  value={villageId}
+                  onChange={handleVillageChange}
+                  className="w-full border border-gray-300 rounded text-xs text-gray-400 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Pilih Kelurahan</option>
+                  {filteredVillages.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
                 </select>
               </div>
+
+
             </div>
 
             <div>
