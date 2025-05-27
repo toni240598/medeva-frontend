@@ -65,6 +65,11 @@ export const getRoles = async () => {
   return response.data.data;
 }
 
+export const getDoctorCodes = async () => {
+  const response = await api.get('/doctor-codes');
+  return response.data.data;
+}
+
 export const getEmployees = async (params = {}) => {
   const response = await api.get('/employees', {params});
   return response.data.data;

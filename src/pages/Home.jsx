@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getEmployees, getJobTitles, getRoles, getProvinces, getDistricts, getVillages, } from '../services/api';
+import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
+import { getEmployees, getJobTitles, getRoles, getProvinces, getCities, getDistricts, getVillages, getDoctorCodes, } from '../services/api';
 
 
 const statusList = [
@@ -32,15 +33,44 @@ export default function Home() {
     setGender(e.target.value);
     setIsErrorGender(false);
   };
+  const [birthPlace, setBirthPlace] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
 
-  const [birthPlace, setBirthPlace] = useState("");
   const [jobTitleList, setJobTitleList] = useState([]);
   const [jobTitleId, setJobTitleId] = useState(null);
   const [customJobTitle, setCustomJobTitle] = useState("");
   const [roleList, setRoleList] = useState([]);
   const [roleIds, setRoleIds] = useState([]);
+  const [contractStartDate, setContractStartDate] = useState('');
+  const [contractEndDate, setContractEndDate] = useState('');
+  const [martialStatus, setMartialStatus] = useState('single');
+  const [addressDetail, setAddressDetail] = useState('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState('');
+  const [doctorCodeList, setDoctorCodeList] = useState([]);
+  const [doctorCodeId, setDoctorCodeId] = useState(null);
+  const [provinceList, setProvinceList] = useState([]);
+  const [provinceId, setProvinceId] = useState(null);
+  const handleProvinceChange = (e) => {
+    const _provinceId = e.target.value;
+    setProvinceId(_provinceId);
+    setCityId(null);
+    setFilteredCities(cityList.filter(c => c.id == e.target.value));
+  }
+  const [cityList, setCityList] = useState([]);
+  const [cityId, setCityId] = useState(null);
+  const [filteredCities, setFilteredCities] = useState([]);
+  const handleCityChange = (e) => {
+    setCityId(e.target.value);
+  }
 
-
+  const [uploadProfile, setUploadProfile] = useState(null);
+  const handleFileChange = (e) => {
+    setUploadProfile(e.target.files[0]); // ambil file pertama
+  };
 
   // fungsi fetchEmployees di luar useEffect supaya bisa dipanggil ulang
   const fetchEmployees = async () => {
@@ -64,11 +94,17 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const _jobTitles = await getJobTitles();
-        setJobTitleList(_jobTitles);
         const roles = await getRoles();
-        console.log(roles);
         setRoleList(roles);
+        const jobTitles = await getJobTitles();
+        setJobTitleList(jobTitles);
+        const doctorCodes = await getDoctorCodes();
+        setDoctorCodeList(doctorCodes);
+        const provinces = await getProvinces();
+        setProvinceList(provinces);
+        const cities = await getCities();
+        setCityList(cities);
+        setFilteredCities(cities);
       } catch (error) {
         console.error("Gagal ambil job titles", error);
       }
@@ -108,7 +144,10 @@ export default function Home() {
     const errorGender = isEmpty(gender);
     setIsErrorGender(errorGender);
 
-    console.log(roleIds, jobTitleId, customJobTitle, gender, fullName, identityNumber, birthPlace);
+    console.log(roleIds, jobTitleId, customJobTitle, gender, fullName, identityNumber,
+      birthPlace, birthDate, phoneNumber, contractStartDate, contractEndDate, addressDetail,
+      username, email, password, doctorCodeId, uploadProfile, provinceId,
+    );
   }
 
   return (
@@ -229,7 +268,7 @@ export default function Home() {
                 onBlur={() => setTouchedFullName(true)}
                 className={`w-full border rounded text-xs px-2 py-1 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500  border-gray-300 text-gray-400`}
               />
-              {touchedFullName && isEmpty(fullName)  && (
+              {touchedFullName && isEmpty(fullName) && (
                 <p className="text-red-600 text-[10px] mb-0">Nama Lengkap wajib diisi.</p>
               )}
             </div>
@@ -296,33 +335,76 @@ export default function Home() {
                 className={`w-full border rounded text-xs px-2 py-1 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500  border-gray-300 text-gray-400`}
               />
             </div>
-            
+
             <div>
-              <label for="tanggalLahir" class="block text-[10px] font-semibold text-gray-700 mb-1">Tanggal Lahir</label>
-              <input id="tanggalLahir" type="text" placeholder="dd/mm/yyyy"
-                class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <label htmlFor="birthDate" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                Tanggal Lahir
+              </label>
+              <input
+                id="birthDate"
+                name="birthDate"
+                type="date"
+                placeholder="dd/mm/yyyy"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                className="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
             </div>
+
             <div>
-              <label for="noTelepon" class="block text-[10px] font-semibold text-gray-700 mb-1">No. Telepon</label>
-              <input id="noTelepon" type="text" placeholder="No. Telepon"
-                class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <label htmlFor="phoneNumber" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                No. Telepon
+              </label>
+              <input type="text" id="phoneNumber" name="phoneNumber" placeholder="No. Telepon"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className={`w-full border rounded text-xs px-2 py-1 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500  border-gray-300 text-gray-400`}
+              />
             </div>
+
             <div class="grid grid-cols-2 gap-3">
+
               <div>
-                <label for="provinsi" class="block text-[10px] font-semibold text-gray-700 mb-1">Provinsi</label>
-                <select id="provinsi"
-                  class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  <option>Pilih Provinsi</option>
+                <label htmlFor="provinsi" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                  Provinsi
+                </label>
+                <select
+                  id="provinsi"
+                  value={provinceId}
+                  onChange={handleProvinceChange}
+                  className="w-full border border-gray-300 rounded text-xs text-gray-400 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Pilih Provinsi</option>
+                  {provinceList.map((prov) => (
+                    <option key={prov.id} value={prov.id}>
+                      {prov.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div>
-                <label for="kotaKabupaten" class="block text-[10px] font-semibold text-gray-700 mb-1">Kota / Kabupaten</label>
-                <select id="kotaKabupaten"
-                  class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  <option>Pilih Kota/Kabupaten</option>
+                <label htmlFor="kotaKabupaten" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                  Kota / Kabupaten
+                </label>
+                <select
+                  id="kotaKabupaten"
+                  value={cityId}
+                  onChange={handleCityChange}
+                  className="w-full border border-gray-300 rounded text-xs text-gray-400 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Pilih Kota/Kabupaten</option>
+                  {filteredCities.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
             </div>
+
+
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label for="kecamatan" class="block text-[10px] font-semibold text-gray-700 mb-1">Kecamatan</label>
@@ -339,44 +421,73 @@ export default function Home() {
                 </select>
               </div>
             </div>
+
             <div>
-              <label for="uploadProfile" class="block text-[10px] font-semibold text-gray-700 mb-1">Foto Profile</label>
-              <input id="uploadProfile" type="file" accept="image/*"
-                class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <label htmlFor="uploadProfile" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                Foto Profile
+              </label>
+              <input
+                id="uploadProfile"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
             </div>
+
             <div>
-              <label for="detilAlamat" class="block text-[10px] font-semibold text-gray-700 mb-1">Detil Alamat</label>
-              <textarea id="detilAlamat" rows="3" placeholder="Alamat"
+              <label for="addressDetail" class="block text-[10px] font-semibold text-gray-700 mb-1">Detil Alamat</label>
+              <textarea id="addressDetail" rows="3" placeholder="Alamat" value={addressDetail} onChange={(e) => setAddressDetail(e.target.value)}
                 class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea>
             </div>
+
           </div>
 
           {/* <!-- Right Panel --> */}
           <div class="flex flex-col gap-3 w-full md:w-1/2 mt-[40px]">
+
             <div>
               <label for="username" class="block text-[10px] font-semibold text-gray-700 mb-1">Username <span
                 class="text-red-600">*</span></label>
-              <input id="username" type="text" placeholder="Username"
+              <input id="username" type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)}
                 class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
+
             <div>
               <label for="email" class="block text-[10px] font-semibold text-gray-700 mb-1">Email <span
                 class="text-red-600">*</span></label>
-              <input id="email" type="email" placeholder="Email"
+              <input id="email" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
                 class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
+
             <div>
-              <label for="password" class="block text-[10px] font-semibold text-gray-700 mb-1">Password <span
-                class="text-red-600">*</span></label>
-              <div class="relative">
-                <input id="password" type="password" placeholder="Password"
-                  class="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 pr-8 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                <button type="button" aria-label="Toggle password visibility"
-                  class="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  <ion-icon name="eye-outline" class="text-sm"></ion-icon>
+              <label htmlFor="password" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                Password <span className="text-red-600">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 pr-8 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <button
+                  type="button"
+                  aria-label="Toggle password visibility"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <IoEyeOffOutline className="text-sm" />
+                  ) : (
+                    <IoEyeOutline className="text-sm" />
+                  )}
                 </button>
               </div>
             </div>
+
             <fieldset class="text-[10px] font-semibold text-gray-700 gap-2 mt-[-5px]">
               <label class="block text-[10px] font-semibold text-gray-700 mb-1">Tipe <span class="text-red-600">*</span></label>
               <div class="d-flex justify-content-between">
@@ -425,32 +536,68 @@ export default function Home() {
                 </div>
               </div>
             </fieldset>
+
             <div>
-              <label for="tglMulaiKontrak" class="block text-[10px] font-semibold text-gray-700 mb-1">Tanggal Mulai
-                Kontrak</label>
-              <input id="tglMulaiKontrak" type="text" value="01/01/2024"
-                class="w-full border border-gray-300 rounded text-xs text-gray-400 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <label htmlFor="contractStartDate" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                Tanggal Mulai Kontrak
+              </label>
+              <input
+                id="contractStartDate"
+                name="contractStartDate"
+                type="date"
+                placeholder="dd/mm/yyyy"
+                value={contractStartDate}
+                onChange={(e) => setContractStartDate(e.target.value)}
+                className="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
             </div>
+
             <div>
-              <label for="tglSelesaiKontrak" class="block text-[10px] font-semibold text-gray-700 mb-1">Tanggal Selesai
-                Kontrak</label>
-              <input id="tglSelesaiKontrak" type="text" value="01/01/2029"
-                class="w-full border border-gray-300 rounded text-xs text-gray-400 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <label htmlFor="contractEndDate" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                Tanggal Mulai Kontrak
+              </label>
+              <input
+                id="contractEndDate"
+                name="contractEndDate"
+                type="date"
+                placeholder="dd/mm/yyyy"
+                value={contractEndDate}
+                onChange={(e) => setContractEndDate(e.target.value)}
+                className="w-full border border-gray-300 rounded text-xs text-gray-400 placeholder:text-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
             </div>
+
             <div>
-              <label for="statusMenikah" class="block text-[10px] font-semibold text-gray-700 mb-1">Status Menikah</label>
-              <select id="statusMenikah"
+              <label for="martialStatus" class="block text-[10px] font-semibold text-gray-700 mb-1">Status Menikah</label>
+              <select id="martialStatus"
+                value={martialStatus}
+                onChange={(e) => setMartialStatus(e.target.value)}
                 class="w-full border border-gray-300 rounded text-xs text-gray-400 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                <option>Pilih Status</option>
+                <option value="single">Lajang</option>
+                <option value="married">Menikah</option>
+                <option value="divorced">Bercerai</option>
               </select>
             </div>
+
             <div>
-              <label for="kodeDokterBPJS" class="block text-[10px] font-semibold text-gray-700 mb-1">Kode Dokter BPJS</label>
-              <select id="kodeDokterBPJS"
-                class="w-full border border-gray-300 rounded text-xs text-gray-400 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                <option>Pilih Kode Dokter</option>
+              <label htmlFor="kodeDokterBPJS" className="block text-[10px] font-semibold text-gray-700 mb-1">
+                Kode Dokter BPJS
+              </label>
+              <select
+                id="kodeDokterBPJS"
+                value={doctorCodeId}
+                onChange={(e) => setDoctorCodeId(e.target.value)}
+                className="w-full border border-gray-300 rounded text-xs text-gray-400 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Pilih Kode Dokter</option>
+                {doctorCodeList.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.code} - {d.description}
+                  </option>
+                ))}
               </select>
             </div>
+
             <div class="flex justify-end mt-auto">
               <button type="submit"
                 className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded px-4 py-1">Simpan</button>
